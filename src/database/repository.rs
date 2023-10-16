@@ -20,7 +20,7 @@ pub struct DbOperatorNew {
     address: String,
 }
 
-struct DbOperatorConnected {
+pub struct DbOperatorConnected {
     db: Surreal<Client>,
 }
 
@@ -30,7 +30,7 @@ impl DbOperatorNew {
             address: address.to_string(),
         }
     }
-    async fn connect(&self) -> Result<DbOperatorConnected> {
+    pub async fn connect(&self) -> Result<DbOperatorConnected> {
         let db = Surreal::new::<Ws>(&self.address)
             .await
             .map_err(Error::ConnectError)?;
@@ -51,7 +51,7 @@ impl DbOperatorNew {
 }
 
 impl DbOperatorConnected {
-    async fn get_all_records(&self) -> Result<Vec<TodoEntry>> {
+    pub async fn get_all_records(&self) -> Result<Vec<TodoEntry>> {
         let result: Vec<TodoEntry> = self
             .db
             .select(TABLE)
@@ -59,7 +59,7 @@ impl DbOperatorConnected {
             .map_err(Error::ReadRecordError)?;
         Ok(result)
     }
-    async fn create_record(&self, entry: &TodoEntry) -> Result<()> {
+    pub async fn create_record(&self, entry: &TodoEntry) -> Result<()> {
         let _: Vec<TodoEntry> = self
             .db
             .create(TABLE)
@@ -72,7 +72,7 @@ impl DbOperatorConnected {
         );
         Ok(())
     }
-    async fn delete_record(&self, entry: &TodoEntry) -> Result<()> {
+    pub async fn delete_record(&self, entry: &TodoEntry) -> Result<()> {
         let _: Option<TodoEntry> = self
             .db
             .delete((TABLE, entry.id.id_without_brackets()))
@@ -84,7 +84,7 @@ impl DbOperatorConnected {
         );
         Ok(())
     }
-    async fn update_record(&self, entry: &TodoEntry) -> Result<()> {
+    pub async fn update_record(&self, entry: &TodoEntry) -> Result<()> {
         let _: Option<TodoEntry> = self
             .db
             .update((TABLE, entry.id.id_without_brackets()))
