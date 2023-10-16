@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use surreal_id::NewId;
 use surrealdb::{
     engine::remote::ws::{Client, Ws},
@@ -7,10 +5,16 @@ use surrealdb::{
     Surreal,
 };
 
+use log::debug;
+
 use super::error::{Error, Result};
 use super::model::todo_entry::TodoEntry;
 
 pub const TABLE: &str = "todo_app";
+const NAMESPACE: &str = "todo_namespace";
+const DB_NAME: &str = "todo_db";
+const UNAME: &str = "root"; // add secrets?
+const PASS: &str = "rootpassword"; //
 
 pub struct DbOperatorNew {
     address: String,
@@ -31,17 +35,18 @@ impl DbOperatorNew {
             .await
             .map_err(Error::ConnectError)?;
         db.signin(Root {
-            username: "root",
-            password: "rootpassword",
+            username: UNAME,
+            password: PASS,
         })
         .await
         .map_err(Error::ConnectError)?;
 
         // Select a specific namespace / database
-        db.use_ns("test").use_db("test").await;
-        Ok(DbOperatorConnected {
-            db,
-        })
+        db.use_ns(NAMESPACE)
+            .use_db(DB_NAME)
+            .await
+            .map_err(Error::ConnectError)?;
+        Ok(DbOperatorConnected { db })
     }
 }
 
@@ -55,35 +60,48 @@ impl DbOperatorConnected {
         Ok(result)
     }
     async fn create_record(&self, entry: &TodoEntry) -> Result<()> {
-        let record: Vec<TodoEntry> = self
+        let _: Vec<TodoEntry> = self
             .db
             .create(TABLE)
             .content(entry)
             .await
             .map_err(Error::CreateRecordError)?;
+        debug!(
+            "Created record with id: {} !",
+            entry.id.id_without_brackets()
+        );
         Ok(())
     }
     async fn delete_record(&self, entry: &TodoEntry) -> Result<()> {
-        let record: Option<TodoEntry> = self
+        let _: Option<TodoEntry> = self
             .db
             .delete((TABLE, entry.id.id_without_brackets()))
             .await
             .map_err(Error::DeleteRecordError)?;
+        debug!(
+            "Deleting record with id: {} !",
+            entry.id.id_without_brackets()
+        );
         Ok(())
     }
     async fn update_record(&self, entry: &TodoEntry) -> Result<()> {
-        let record: Option<TodoEntry> = self
+        let _: Option<TodoEntry> = self
             .db
             .update((TABLE, entry.id.id_without_brackets()))
             .await
             .map_err(Error::UpdateRecordError)?;
+        debug!(
+            "Updated record with id: {} !",
+            entry.id.id_without_brackets()
+        );
         Ok(())
     }
 }
 
 #[cfg(test)]
 mod test {
-    use std::{vec, collections::HashMap, rc::Rc};
+
+    use std::{collections::HashMap, vec};
 
     use surreal_id::NewId;
 
@@ -93,9 +111,20 @@ mod test {
 
     use crate::database::error::Result;
 
+    fn init() {
+        let _ = env_logger::builder() // Include all events in tests
+            .filter_level(log::LevelFilter::max())
+            // Ensure events are captured by `cargo test`
+            .is_test(true)
+            // Ignore errors initializing the logger if tests race to configure it
+            .try_init();
+    }
+
     #[tokio::test]
     async fn a_test() {
-        clear_db().await.expect("crear db");        
+        init();
+
+        clear_db().await.expect("crear db");
         let db = DbOperatorNew::new("localhost:8000");
         let db = db.connect().await.expect("cannot connect to DB");
         let mut non_default_todo = TodoEntry::default();
@@ -103,11 +132,8 @@ mod test {
         non_default_todo.priority = 1;
         non_default_todo.title = "non default".to_string();
         non_default_todo.language = "rust".to_string();
-        
-        let todos: Vec<TodoEntry> = vec![
-            default_todo.clone(),
-            non_default_todo.clone()
-        ];
+
+        let todos: Vec<TodoEntry> = vec![default_todo.clone(), non_default_todo.clone()];
 
         for todo in todos {
             db.create_record(&todo).await.expect("error adding entry");
@@ -117,11 +143,10 @@ mod test {
         let mut hm: HashMap<String, &TodoEntry> = HashMap::new();
         hm.insert(default_todo.id.get_inner_string(), &default_todo);
         hm.insert(non_default_todo.id.get_inner_string(), &non_default_todo);
-        
+
         for entry in all_entries {
             assert_eq!(**hm.get(&entry.id.get_inner_string()).unwrap(), entry);
         }
-
     }
     async fn clear_db() -> Result<()> {
         let db = DbOperatorNew::new("localhost:8000");
@@ -130,6 +155,6 @@ mod test {
         for record in rec {
             db.delete_record(&record).await.expect("should be working");
         }
-        Ok(())        
+        Ok(())
     }
 }
