@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use surreal_id::NewId;
 use surrealdb::{opt::RecordId, sql::Id};
 
-use crate::database::controller::TABLE;
+use crate::database::repository::TABLE;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct TodoEntry {
