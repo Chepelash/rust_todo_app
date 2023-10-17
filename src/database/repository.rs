@@ -72,22 +72,20 @@ impl DbOperatorConnected {
         );
         Ok(())
     }
-    pub async fn delete_record(&self, entry: &TodoEntry) -> Result<()> {
+    pub async fn delete_record(&self, entry_id: &str) -> Result<()> {
         let _: Option<TodoEntry> = self
             .db
-            .delete((TABLE, entry.id.id_without_brackets()))
+            .delete((TABLE, entry_id))
             .await
             .map_err(Error::DeleteRecordError)?;
-        debug!(
-            "Deleting record with id: {} !",
-            entry.id.id_without_brackets()
-        );
+        debug!("Deleting record with id: {} !", entry_id);
         Ok(())
     }
     pub async fn update_record(&self, entry: &TodoEntry) -> Result<()> {
         let _: Option<TodoEntry> = self
             .db
             .update((TABLE, entry.id.id_without_brackets()))
+            .content(entry)
             .await
             .map_err(Error::UpdateRecordError)?;
         debug!(
@@ -147,6 +145,7 @@ mod test {
         for entry in all_entries {
             assert_eq!(**hm.get(&entry.id.get_inner_string()).unwrap(), entry);
         }
+        clear_db().await.expect("should clear");
     }
     async fn clear_db() -> Result<()> {
         let db = DbOperatorNew::new("localhost:8000");
