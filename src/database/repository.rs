@@ -152,7 +152,7 @@ mod test {
         let db = db.connect().await.expect("cannot connect to DB");
         let rec = db.get_all_records().await.expect("should be working");
         for record in rec {
-            db.delete_record(&record).await.expect("should be working");
+            db.delete_record(&record.id.id_without_brackets()).await.expect("should be working");
         }
         Ok(())
     }
