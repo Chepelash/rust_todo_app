@@ -1,8 +1,5 @@
-use crate::database::{
-    
-    model::todo_entry::TodoEntry,
-    repository::DbOperatorConnected,
-};
+use crate::database::repository::DbOperatorConnected;
+use crate::model::todo_entry::TodoEntry;
 use actix_web::{web, HttpResponse, Responder};
 
 pub async fn get_all_records(data: web::Data<DbOperatorConnected>) -> impl Responder {

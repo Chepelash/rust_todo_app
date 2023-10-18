@@ -1,6 +1,7 @@
 use actix_web::{web, App, HttpServer};
 
 mod database;
+mod model;
 mod rest_controller;
 
 use database::repository;

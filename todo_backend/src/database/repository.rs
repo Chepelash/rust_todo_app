@@ -8,7 +8,7 @@ use surrealdb::{
 use log::debug;
 
 use super::error::{Error, Result};
-use super::model::todo_entry::TodoEntry;
+use crate::model::todo_entry::TodoEntry;
 
 pub const TABLE: &str = "todo_app";
 const NAMESPACE: &str = "todo_namespace";
@@ -152,7 +152,9 @@ mod test {
         let db = db.connect().await.expect("cannot connect to DB");
         let rec = db.get_all_records().await.expect("should be working");
         for record in rec {
-            db.delete_record(&record.id.id_without_brackets()).await.expect("should be working");
+            db.delete_record(&record.id.id_without_brackets())
+                .await
+                .expect("should be working");
         }
         Ok(())
     }
