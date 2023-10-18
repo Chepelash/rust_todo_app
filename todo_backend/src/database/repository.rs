@@ -103,7 +103,7 @@ mod test {
 
     use surreal_id::NewId;
 
-    use crate::database::model::todo_entry::TodoEntry;
+    use crate::model::todo_entry::TodoEntry;
 
     use super::DbOperatorNew;
 
